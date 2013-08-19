@@ -9,7 +9,7 @@ class @Chosen extends AbstractChosen
 
     # HTML Templates
     @single_temp = new Template('<a class="chosen-single chosen-default" tabindex="-1"><span>#{default}</span><div><b></b></div></a><div class="chosen-drop"><div class="chosen-search"><input type="text" autocomplete="off" /></div><ul class="chosen-results"></ul></div>')
-    @multi_temp = new Template('<ul class="chosen-choices"><li class="search-field"><input type="text" value="#{default}" class="default" autocomplete="off" style="width:25px;" /></li></ul><div class="chosen-drop"><ul class="chosen-results"></ul></div>')
+    @multi_temp = new Template('<ul class="chosen-choices"><li class="search-field"><input type="text" value="#{default}" class="default" autocomplete="off" /></li></ul><div class="chosen-drop"><ul class="chosen-results"></ul></div>')
     @no_results_temp = new Template('<li class="no-results">' + @results_none_found + ' "<span>#{terms}</span>"</li>')
 
   set_up_html: ->
@@ -32,7 +32,6 @@ class @Chosen extends AbstractChosen
 
     @search_field = @container.down('input')
     @search_results = @container.down('ul.chosen-results')
-    this.search_field_scale()
 
     @search_no_results = @container.down('li.no-results')
 
@@ -150,7 +149,6 @@ class @Chosen extends AbstractChosen
     this.clear_backstroke()
 
     this.show_search_field_default()
-    this.search_field_scale()
 
   activate_field: ->
     @container.addClassName "chosen-container-active"
@@ -186,7 +184,6 @@ class @Chosen extends AbstractChosen
 
     this.search_field_disabled()
     this.show_search_field_default()
-    this.search_field_scale()
 
     @parsing = false
 
@@ -301,8 +298,6 @@ class @Chosen extends AbstractChosen
 
       link.up('li').remove()
 
-      this.search_field_scale()
-
   results_reset: ->
     this.reset_single_select_options()
     @form_field.options[0].selected = true
@@ -351,8 +346,6 @@ class @Chosen extends AbstractChosen
       @form_field.simulate("change") if typeof Event.simulate is 'function' && (@is_multiple || @form_field.selectedIndex != @current_selectedIndex)
       @current_selectedIndex = @form_field.selectedIndex
 
-      this.search_field_scale()
-
   single_set_selected_text: (text=@default_text) ->
     if text is @default_text
       @selected_item.addClassName("chosen-default")
@@ -375,7 +368,6 @@ class @Chosen extends AbstractChosen
       this.winnow_results() if @results_showing
 
       @form_field.simulate("change") if typeof Event.simulate is 'function'
-      this.search_field_scale()
       return true
     else
       return false
@@ -446,7 +438,6 @@ class @Chosen extends AbstractChosen
 
   keydown_checker: (evt) ->
     stroke = evt.which ? evt.keyCode
-    this.search_field_scale()
 
     this.clear_backstroke() if stroke != 8 and this.pending_backstroke
 
@@ -469,27 +460,3 @@ class @Chosen extends AbstractChosen
         evt.preventDefault()
         this.keydown_arrow()
         break
-
-  search_field_scale: ->
-    if @is_multiple
-      h = 0
-      w = 0
-
-      style_block = "position:absolute; left: -1000px; top: -1000px; display:none;"
-      styles = ['font-size','font-style', 'font-weight', 'font-family','line-height', 'text-transform', 'letter-spacing']
-
-      for style in styles
-        style_block += style + ":" + @search_field.getStyle(style) + ";"
-
-      div = new Element('div', { 'style' : style_block }).update(@search_field.value.escapeHTML())
-      document.body.appendChild(div)
-
-      w = Element.measure(div, 'width') + 25
-      div.remove()
-
-      f_width = @container.getWidth()
-
-      if( w > f_width-10 )
-        w = f_width - 10
-
-      @search_field.setStyle({'width': w + 'px'})
