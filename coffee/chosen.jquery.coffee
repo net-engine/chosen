@@ -196,7 +196,7 @@ class Chosen extends AbstractChosen
         if data.selected and @is_multiple
           this.choice_build data
         else if data.selected and not @is_multiple
-          @selected_item.removeClass("chzn-default").find("span").html this.choice_label(data)
+          @selected_item.removeClass("chosen-default").find("span").html this.choice_label(data)
           this.single_deselect_control_build() if @allow_single_deselect
 
     this.search_field_disabled()
@@ -293,17 +293,24 @@ class Chosen extends AbstractChosen
 
   choice_build: (item) ->
     choice_id = @container_id + "_c_" + item.array_index
-    @choices += 1
-    @search_container.before  '<li class="search-choice" id="' + choice_id + '"><span>' + this.choice_label(item) + '</span><a href="javascript:void(0)" class="search-choice-close" rel="' + item.array_index + '"></a></li>'
-    link = $('#' + choice_id).find("a").first()
-    link.click (evt) => this.choice_destroy_link_click(evt)
+    choice = $('<li />', { class: "search-choice", id: choice_id }).html("<span>#{ this.choice_label(item) }</span>")
+
+    if item.disabled
+      choice.addClass 'search-choice-disabled'
+    else
+      close_link = $('<a />', { class: 'search-choice-close', 'data-option-array-index': item.array_index })
+      close_link.bind 'click.chosen', (evt) => this.choice_destroy_link_click(evt)
+      choice.append close_link
+    
+    @search_container.before  choice
 
   choice_label: (item) ->
     if @include_group_label_in_selected
-      group_label = if item.group_label? then "<b class='group-name'>#{item.group_label}</b>" else ''
+      group_label = if item.group_label? then "<span class='group-name'>#{item.group_label}</span>" else ''
       group_label + item.html
     else
       item.html
+  
   choice_destroy_link_click: (evt) ->
     evt.preventDefault()
     evt.stopPropagation()
