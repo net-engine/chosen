@@ -187,18 +187,6 @@ class Chosen extends AbstractChosen
 
     this.update_results_content this.results_option_build({first:true})
 
-    content = ''
-    for data in @results_data
-      if data.group
-        content += this.result_add_group data
-      else if !data.empty
-        content += this.result_add_option data
-        if data.selected and @is_multiple
-          this.choice_build data
-        else if data.selected and not @is_multiple
-          @selected_item.removeClass("chosen-default").find("span").html this.choice_label(data)
-          this.single_deselect_control_build() if @allow_single_deselect
-
     this.search_field_disabled()
     this.show_search_field_default()
 
