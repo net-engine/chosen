@@ -182,6 +182,18 @@ class @Chosen extends AbstractChosen
 
     this.update_results_content this.results_option_build({first:true})
 
+    content = ''
+    for data in @results_data
+      if data.group
+        content += this.result_add_group data
+      else if !data.empty
+        content += this.result_add_option data
+        if data.selected and @is_multiple
+          this.choice_build data
+        else if data.selected and not @is_multiple
+          @selected_item.removeClassName("chzn-default").down("span").update this.choice_label(data)
+          this.single_deselect_control_build() if @allow_single_deselect
+
     this.search_field_disabled()
     this.show_search_field_default()
 
@@ -274,16 +286,24 @@ class @Chosen extends AbstractChosen
     this.result_clear_highlight() if evt.target.hasClassName('active-result') or evt.target.up('.active-result')
 
   choice_build: (item) ->
-    choice = new Element('li', { class: "search-choice" }).update("<span>#{item.html}</span>")
-
-    if item.disabled
-      choice.addClassName 'search-choice-disabled'
-    else
-      close_link = new Element('a', { href: '#', class: 'search-choice-close', rel: item.array_index })
-      close_link.observe "click", (evt) => this.choice_destroy_link_click(evt)
-      choice.insert close_link
+    choice_id = @container_id + "_c_" + item.array_index
+    @choices += 1
+    @search_container.insert
+      before: @choice_temp.evaluate
+        id:       choice_id
+        choice:   this.choice_label(item)
+        position: item.array_index
+    link = $(choice_id).down('a')
+    link.observe "click", (evt) => this.choice_destroy_link_click(evt)
 
     @search_container.insert { before: choice }
+
+  choice_label: (item) ->
+    if @include_group_label_in_selected
+      group_label = if item.group_label? then "<b class='group-name'>#{item.group_label}</b>" else ''
+      group_label + item.html
+    else
+      item.html
 
   choice_destroy_link_click: (evt) ->
     evt.preventDefault()
@@ -337,7 +357,8 @@ class @Chosen extends AbstractChosen
       if @is_multiple
         this.choice_build item
       else
-        this.single_set_selected_text(item.text)
+        @selected_item.down("span").update this.choice_label(item)
+        this.single_deselect_control_build() if @allow_single_deselect
 
       this.results_hide() unless (evt.metaKey or evt.ctrlKey) and @is_multiple
 

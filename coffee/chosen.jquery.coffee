@@ -187,6 +187,18 @@ class Chosen extends AbstractChosen
 
     this.update_results_content this.results_option_build({first:true})
 
+    content = ''
+    for data in @results_data
+      if data.group
+        content += this.result_add_group data
+      else if !data.empty
+        content += this.result_add_option data
+        if data.selected and @is_multiple
+          this.choice_build data
+        else if data.selected and not @is_multiple
+          @selected_item.removeClass("chzn-default").find("span").html this.choice_label(data)
+          this.single_deselect_control_build() if @allow_single_deselect
+
     this.search_field_disabled()
     this.show_search_field_default()
 
@@ -280,17 +292,18 @@ class Chosen extends AbstractChosen
     this.result_clear_highlight() if $(evt.target).hasClass "active-result" or $(evt.target).parents('.active-result').first()
 
   choice_build: (item) ->
-    choice = $('<li />', { class: "search-choice" }).html("<span>#{item.html}</span>")
+    choice_id = @container_id + "_c_" + item.array_index
+    @choices += 1
+    @search_container.before  '<li class="search-choice" id="' + choice_id + '"><span>' + this.choice_label(item) + '</span><a href="javascript:void(0)" class="search-choice-close" rel="' + item.array_index + '"></a></li>'
+    link = $('#' + choice_id).find("a").first()
+    link.click (evt) => this.choice_destroy_link_click(evt)
 
-    if item.disabled
-      choice.addClass 'search-choice-disabled'
+  choice_label: (item) ->
+    if @include_group_label_in_selected
+      group_label = if item.group_label? then "<b class='group-name'>#{item.group_label}</b>" else ''
+      group_label + item.html
     else
-      close_link = $('<a />', { class: 'search-choice-close', 'data-option-array-index': item.array_index })
-      close_link.bind 'click.chosen', (evt) => this.choice_destroy_link_click(evt)
-      choice.append close_link
-    
-    @search_container.before  choice
-
+      item.html
   choice_destroy_link_click: (evt) ->
     evt.preventDefault()
     evt.stopPropagation()
@@ -341,9 +354,10 @@ class Chosen extends AbstractChosen
       if @is_multiple
         this.choice_build item
       else
-        this.single_set_selected_text(item.text)
-
-      this.results_hide() unless (evt.metaKey or evt.ctrlKey) and @is_multiple
+        @selected_item.find("span").first().html this.choice_label(item)
+        this.single_deselect_control_build() if @allow_single_deselect
+      
+      this.results_hide() unless evt.metaKey and @is_multiple
 
       @search_field.val ""
 
